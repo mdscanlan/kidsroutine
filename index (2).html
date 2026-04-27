@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#FF8F00" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Daily Routine" />
+  <title>Daily Routine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --morning-bg: linear-gradient(135deg, #FFF9C4 0%, #FFE0B2 40%, #FFCCBC 100%);
+      --evening-bg: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 40%, #9FA8DA 100%);
+      --card-bg: rgba(255,255,255,0.75);
+      --shadow: 0 8px 32px rgba(0,0,0,0.12);
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito', sans-serif; min-height: 100vh; transition: background 0.8s ease; overflow-x: hidden; position: relative; }
+    body.morning { background: var(--morning-bg); }
+    body.evening { background: var(--evening-bg); }
+
+    .floaties { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .floaty { position: absolute; font-size: 2.5rem; animation: floatUp linear infinite; opacity: 0.18; user-select: none; }
+    @keyframes floatUp {
+      0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      10%  { opacity: 0.18; } 90% { opacity: 0.18; }
+      100% { transform: translateY(-15vh) rotate(360deg); opacity: 0; }
+    }
+    .star { position: absolute; background: white; border-radius: 50%; animation: twinkle ease-in-out infinite; }
+    @keyframes twinkle { 0%,100%{opacity:.1;transform:scale(1)} 50%{opacity:.7;transform:scale(1.4)} }
+
+    .container { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 20px 16px 60px; min-height: 100vh; }
+
+    .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .date-display { font-weight: 700; font-size: 0.85rem; opacity: 0.55; }
+    .settings-btn { background: rgba(255,255,255,0.6); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+    .header { text-align: center; margin-bottom: 20px; }
+    .header-emoji { font-size: 4rem; display: block; margin-bottom: 6px; animation: bounce 2s ease-in-out infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .header h1 { font-family: 'Fredoka One', cursive; font-size: 2.2rem; line-height: 1.1; }
+    body.morning .header h1 { color: #BF360C; }
+    body.evening .header h1 { color: #1A237E; }
+
+    .pill-row { display: flex; gap: 10px; margin-bottom: 14px; background: rgba(255,255,255,0.5); border-radius: 50px; padding: 5px; }
+    .pill-btn { flex: 1; padding: 10px 8px; border: none; border-radius: 40px; font-family: 'Fredoka One', cursive; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; background: transparent; color: #555; }
+    .pill-btn.active { color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transform: scale(1.03); }
+    body.morning .pill-btn.active { background: linear-gradient(135deg, #FF8F00, #FF6D00); }
+    body.evening .pill-btn.active { background: linear-gradient(135deg, #3949AB, #5E35B1); }
+
+    .progress-wrap { background: rgba(255,255,255,0.5); border-radius: 50px; height: 14px; margin-bottom: 10px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .progress-bar { height: 100%; border-radius: 50px; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+    body.morning .progress-bar { background: linear-gradient(90deg, #FFB300, #FF6D00); }
+    body.evening .progress-bar { background: linear-gradient(90deg, #7986CB, #3949AB); }
+    .progress-label { text-align: center; font-weight: 700; font-size: 0.85rem; margin-bottom: 14px; opacity: 0.65; }
+
+    .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px 18px; box-shadow: var(--shadow); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.6); }
+    .section-title { font-family: 'Fredoka One', cursive; font-size: 1.4rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    body.morning .section-title { color: #E65100; }
+    body.evening .section-title { color: #283593; }
+
+    .check-item { display: flex; align-items: center; gap: 14px; padding: 14px 12px; border-radius: 16px; margin-bottom: 10px; cursor: pointer; transition: all 0.25s ease; background: rgba(255,255,255,0.6); border: 2px solid rgba(255,255,255,0.8); -webkit-tap-highlight-color: transparent; user-select: none; }
+    .check-item:active { transform: scale(0.97); }
+    .check-item.done { opacity: 0.65; }
+    .check-item.done .item-label { text-decoration: line-through; }
+    body.morning .check-item.done { background: rgba(255,200,100,0.3); }
+    body.evening .check-item.done { background: rgba(100,130,200,0.2); }
+    .checkbox { width: 36px; height: 36px; border-radius: 50%; border: 3px solid #ccc; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); font-size: 1.3rem; background: white; }
+    .check-item.done .checkbox { background: #4CAF50; border-color: #4CAF50; animation: pop 0.3s ease; }
+    @keyframes pop { 0%{transform:scale(0.8)} 60%{transform:scale(1.2)} 100%{transform:scale(1)} }
+    .item-content { flex: 1; }
+    .item-label { font-size: 1.05rem; font-weight: 700; color: #333; display: block; }
+    .item-sub { font-size: 0.82rem; font-weight: 600; color: #888; margin-top: 2px; display: block; }
+    .item-emoji { font-size: 1.6rem; flex-shrink: 0; }
+
+    .celebration { text-align: center; padding: 20px; display: none; }
+    .celebration.show { display: block; }
+    .cel-emoji { font-size: 5rem; display: block; animation: spin 0.8s ease; }
+    @keyframes spin { 0%{transform:rotate(-20deg) scale(0.5)} 60%{transform:rotate(10deg) scale(1.2)} 100%{transform:rotate(0) scale(1)} }
+    .cel-title { font-family: 'Fredoka One', cursive; font-size: 1.8rem; margin-top: 10px; }
+    body.morning .cel-title { color: #E65100; }
+    body.evening .cel-title { color: #283593; }
+    .cel-msg { font-size: 1rem; font-weight: 600; color: #666; margin-top: 6px; }
+
+    .reset-btn { width: 100%; margin-top: 16px; padding: 14px; border: none; border-radius: 50px; font-family: 'Fredoka One', cursive; font-size: 1.1rem; cursor: pointer; transition: all 0.2s ease; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+    .reset-btn:active { transform: scale(0.97); }
+    body.morning .reset-btn { background: linear-gradient(135deg, #FF8F00, #FF6D00); }
+    body.evening .reset-btn { background: linear-gradient(135deg, #3949AB, #5E35B1); }
+
+    /* Settings */
+    .overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+    .settings-sheet { background: white; border-radius: 28px 28px 0 0; padding: 28px 24px 48px; width: 100%; max-width: 480px; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); max-height: 90vh; overflow-y: auto; }
+    .overlay.open .settings-sheet { transform: translateY(0); }
+    .sheet-handle { width: 40px; height: 4px; background: #ddd; border-radius: 4px; margin: 0 auto 20px; }
+    .sheet-title { font-family: 'Fredoka One', cursive; font-size: 1.6rem; color: #333; margin-bottom: 20px; text-align: center; }
+    .field-label { font-weight: 800; font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+    .field-input { width: 100%; padding: 12px 16px; border-radius: 14px; border: 2px solid #eee; font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 700; color: #333; margin-bottom: 16px; outline: none; transition: border-color 0.2s; }
+    .field-input:focus { border-color: #FF8F00; }
+    .ntfy-info { background: #FFF8E1; border-radius: 14px; padding: 14px; margin-bottom: 12px; border: 2px solid #FFE082; }
+    .ntfy-info p { font-size: 0.85rem; font-weight: 600; color: #555; line-height: 1.6; }
+    .ntfy-info a { color: #FF8F00; font-weight: 800; }
+    .ntfy-steps { font-size: 0.85rem; font-weight: 600; color: #555; line-height: 2; margin-bottom: 12px; padding-left: 18px; }
+    .topic-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .ntfy-topic-display { flex: 1; background: #F5F5F5; border-radius: 10px; padding: 10px 14px; font-family: monospace; font-size: 0.85rem; color: #333; word-break: break-all; font-weight: 700; }
+    .regen-btn { background: none; border: 2px solid #ddd; border-radius: 10px; padding: 8px 12px; font-size: 0.8rem; font-weight: 700; cursor: pointer; color: #888; white-space: nowrap; }
+    .save-btn { width: 100%; padding: 16px; border: none; border-radius: 50px; font-family: 'Fredoka One', cursive; font-size: 1.2rem; background: linear-gradient(135deg, #FF8F00, #FF6D00); color: white; cursor: pointer; box-shadow: 0 4px 15px rgba(255,111,0,0.3); }
+
+    #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 999; }
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #333; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 700; font-size: 0.9rem; z-index: 998; transition: transform 0.4s ease; white-space: nowrap; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body class="morning">
+  <canvas id="confetti-canvas"></canvas>
+  <div class="floaties" id="floaties"></div>
+
+  <div class="overlay" id="settings-overlay" onclick="closeSettingsOutside(event)">
+    <div class="settings-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">⚙️ Settings</div>
+      <span class="field-label">Kid 1 Name</span>
+      <input class="field-input" id="kid1-name" type="text" placeholder="Noah" maxlength="20" />
+      <span class="field-label">Kid 2 Name</span>
+      <input class="field-input" id="kid2-name" type="text" placeholder="MK" maxlength="20" />
+      <span class="field-label">📲 Parent Notifications</span>
+      <div class="ntfy-info">
+        <p>Get a notification the moment each child finishes their list! Uses the free <a href="https://ntfy.sh" target="_blank">ntfy app</a>.</p>
+      </div>
+      <ol class="ntfy-steps">
+        <li>Install the free <strong>ntfy</strong> app on your phone</li>
+        <li>Open ntfy → tap <strong>+</strong> → paste the topic below</li>
+        <li>Hit Save — done! 🎉</li>
+      </ol>
+      <span class="field-label">Your Unique Topic</span>
+      <div class="topic-row">
+        <div class="ntfy-topic-display" id="topic-display"></div>
+        <button class="regen-btn" onclick="regenTopic()">🔄 New</button>
+      </div>
+      <button class="save-btn" onclick="saveSettings()">💾 Save</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="container">
+    <div class="top-bar">
+      <div class="date-display" id="date-display"></div>
+      <button class="settings-btn" onclick="openSettings()">⚙️</button>
+    </div>
+
+    <div class="header">
+      <span class="header-emoji" id="header-emoji">☀️</span>
+      <h1 id="header-title">Morning Mission!</h1>
+    </div>
+
+    <div class="pill-row" id="kid-selector">
+      <button class="pill-btn active" id="kid0-btn" onclick="switchKid(0)">👦 <span id="kid0-label">Noah</span></button>
+      <button class="pill-btn" id="kid1-btn" onclick="switchKid(1)">👧 <span id="kid1-label">MK</span></button>
+    </div>
+
+    <div class="pill-row">
+      <button class="pill-btn active" id="morning-btn" onclick="switchList('morning')">☀️ Morning</button>
+      <button class="pill-btn" id="evening-btn" onclick="switchList('evening')">🌙 Evening</button>
+    </div>
+
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <div class="progress-label" id="progress-label">0 of 5 done</div>
+
+    <div class="card">
+      <div class="section-title" id="section-title">☀️ Morning Tasks</div>
+      <div id="items-container"></div>
+      <div class="celebration" id="celebration">
+        <span class="cel-emoji" id="cel-emoji">🌟</span>
+        <p class="cel-title" id="cel-title">All Done!</p>
+        <p class="cel-msg" id="cel-msg">You're amazing!</p>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetList()">🔄 Start Over</button>
+  </div>
+
+  <script>
+    var MORNING_ITEMS = [
+      { emoji:'🍳', label:'Fuel Up',         sub:'Eat breakfast' },
+      { emoji:'😁', label:'Fresh Face',      sub:'Brush hair and teeth' },
+      { emoji:'👟', label:'Feet First',      sub:'Put on socks and shoes' },
+      { emoji:'💧', label:'Hydrate',         sub:'Fill water bottle' },
+      { emoji:'🧥', label:'Final Layer',     sub:'Grab coat' }
+    ];
+    var EVENING_ITEMS = [
+      { emoji:'🚿', label:'Wash Up',         sub:'Take a shower' },
+      { emoji:'👕', label:'Look Ahead',      sub:'Put on clothes for tomorrow' },
+      { emoji:'😁', label:'Nightly Routine', sub:'Brush hair and teeth' },
+      { emoji:'🍎', label:'Snack Attack',    sub:'Pack snacks for tomorrow' },
+      { emoji:'💧', label:'Refill',          sub:'Fill water bottle' },
+      { emoji:'🎒', label:'Gear Up',         sub:'Pack bookbag' },
+      { emoji:'🧹', label:'Clear Space',     sub:'Clean up messes/toys' }
+    ];
+
+    var currentList = 'morning';
+    var currentKid  = 0;
+    var appState    = null;
+    var settings    = null;
+
+    function todayKey() {
+      var d = new Date();
+      return 'routine_' + d.getFullYear() + '_' + d.getMonth() + '_' + d.getDate();
+    }
+
+    function freshState() {
+      return [
+        { morning: repeat(false, MORNING_ITEMS.length), evening: repeat(false, EVENING_ITEMS.length), notified: { morning: false, evening: false } },
+        { morning: repeat(false, MORNING_ITEMS.length), evening: repeat(false, EVENING_ITEMS.length), notified: { morning: false, evening: false } }
+      ];
+    }
+
+    function repeat(val, n) {
+      var arr = [];
+      for (var i = 0; i < n; i++) arr.push(val);
+      return arr;
+    }
+
+    function loadState() {
+      try {
+        var saved = localStorage.getItem(todayKey());
+        if (saved) {
+          var parsed = JSON.parse(saved);
+          // Validate it's the new array format with 2 kids
+          if (Array.isArray(parsed) && parsed.length === 2 && parsed[0].morning && parsed[1].morning) {
+            appState = parsed;
+          } else {
+            // Old format — wipe it and start fresh
+            localStorage.removeItem(todayKey());
+            appState = freshState();
+          }
+        } else {
+          appState = freshState();
+        }
+      } catch(e) {
+        appState = freshState();
+      }
+    }
+
+    function saveState() {
+      try { localStorage.setItem(todayKey(), JSON.stringify(appState)); } catch(e) {}
+    }
+
+    function loadSettings() {
+      try {
+        var s = localStorage.getItem('routine_settings');
+        settings = s ? JSON.parse(s) : null;
+      } catch(e) { settings = null; }
+      if (!settings) {
+        settings = { kid1: 'Noah', kid2: 'MK', topic: generateTopic() };
+        saveSettingsStore();
+      }
+      if (!settings.topic) { settings.topic = generateTopic(); saveSettingsStore(); }
+    }
+
+    function saveSettingsStore() {
+      try { localStorage.setItem('routine_settings', JSON.stringify(settings)); } catch(e) {}
+    }
+
+    function generateTopic() {
+      var words = ['apple','blue','cloud','dream','echo','forest','green','happy','iris','jolly','kite','lemon','maple','nova','ocean','pixel','quest','river','sunny','tango'];
+      var pick = function() { return words[Math.floor(Math.random() * words.length)]; };
+      return 'kids-routine-' + pick() + '-' + pick() + '-' + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    function regenTopic() {
+      settings.topic = generateTopic();
+      document.getElementById('topic-display').textContent = settings.topic;
+    }
+
+    function openSettings() {
+      document.getElementById('kid1-name').value = settings.kid1;
+      document.getElementById('kid2-name').value = settings.kid2;
+      document.getElementById('topic-display').textContent = settings.topic;
+      document.getElementById('settings-overlay').classList.add('open');
+    }
+
+    function closeSettings() {
+      document.getElementById('settings-overlay').classList.remove('open');
+    }
+
+    function closeSettingsOutside(e) {
+      if (e.target === document.getElementById('settings-overlay')) closeSettings();
+    }
+
+    function saveSettings() {
+      var k1 = (document.getElementById('kid1-name').value || '').trim();
+      var k2 = (document.getElementById('kid2-name').value || '').trim();
+      settings.kid1  = k1 || 'Noah';
+      settings.kid2  = k2 || 'MK';
+      settings.topic = (document.getElementById('topic-display').textContent || '').trim();
+      saveSettingsStore();
+      updateKidLabels();
+      closeSettings();
+      showToast('✅ Settings saved!');
+      renderAll();
+    }
+
+    function updateKidLabels() {
+      document.getElementById('kid0-label').textContent = settings.kid1;
+      document.getElementById('kid1-label').textContent = settings.kid2;
+    }
+
+    function switchKid(idx) { currentKid = idx; renderAll(); }
+    function switchList(w)  { currentList = w;  renderAll(); }
+
+    function detectTOD() {
+      var h = new Date().getHours();
+      return (h >= 1 && h < 13) ? 'morning' : 'evening';
+    }
+
+    function renderAll() {
+      var isMorning = (currentList === 'morning');
+      document.body.className = isMorning ? 'morning' : 'evening';
+
+      document.getElementById('header-emoji').textContent  = isMorning ? '☀️' : '🌙';
+      document.getElementById('header-title').textContent  = isMorning ? 'Morning Mission!' : 'Evening Prep!';
+      document.getElementById('section-title').textContent = isMorning ? '☀️ Morning Tasks' : '🌙 Evening Tasks';
+
+      document.getElementById('morning-btn').className = 'pill-btn' + (isMorning  ? ' active' : '');
+      document.getElementById('evening-btn').className = 'pill-btn' + (!isMorning ? ' active' : '');
+      document.getElementById('kid0-btn').className    = 'pill-btn' + (currentKid === 0 ? ' active' : '');
+      document.getElementById('kid1-btn').className    = 'pill-btn' + (currentKid === 1 ? ' active' : '');
+
+      updateKidLabels();
+
+      var items  = isMorning ? MORNING_ITEMS : EVENING_ITEMS;
+      var checks = appState[currentKid][currentList];
+      var done   = 0;
+      for (var i = 0; i < checks.length; i++) { if (checks[i]) done++; }
+      var total  = items.length;
+
+      document.getElementById('progress-bar').style.width = (total > 0 ? Math.round(done / total * 100) : 0) + '%';
+      document.getElementById('progress-label').textContent = done + ' of ' + total + ' done';
+
+      var container = document.getElementById('items-container');
+      container.innerHTML = '';
+
+      for (var j = 0; j < items.length; j++) {
+        (function(idx) {
+          var item = items[idx];
+          var div  = document.createElement('div');
+          div.className = 'check-item' + (checks[idx] ? ' done' : '');
+          div.innerHTML =
+            '<div class="checkbox">' + (checks[idx] ? '✅' : '') + '</div>' +
+            '<div class="item-content">' +
+              '<span class="item-label">' + item.label + '</span>' +
+              '<span class="item-sub">'   + item.sub   + '</span>' +
+            '</div>' +
+            '<span class="item-emoji">' + item.emoji + '</span>';
+          div.addEventListener('click', function() { toggle(idx); });
+          container.appendChild(div);
+        })(j);
+      }
+
+      var kidName = (currentKid === 0) ? settings.kid1 : settings.kid2;
+      var cel = document.getElementById('celebration');
+      if (done === total && total > 0) {
+        cel.className = 'celebration show';
+        document.getElementById('cel-emoji').textContent = isMorning ? '🌟' : '🌜';
+        document.getElementById('cel-title').textContent = kidName + ' is done!';
+        document.getElementById('cel-msg').textContent   = isMorning ? 'Ready to conquer the day! 🚀' : 'All set for tomorrow! 😴';
+      } else {
+        cel.className = 'celebration';
+      }
+
+      renderFloaties(isMorning);
+    }
+
+    function toggle(idx) {
+      var was = appState[currentKid][currentList][idx];
+      appState[currentKid][currentList][idx] = !was;
+      saveState();
+
+      var items = (currentList === 'morning') ? MORNING_ITEMS : EVENING_ITEMS;
+      var done  = 0;
+      for (var i = 0; i < appState[currentKid][currentList].length; i++) {
+        if (appState[currentKid][currentList][i]) done++;
+      }
+
+      if (!was && done === items.length) {
+        triggerConfetti();
+        sendParentNotification(currentKid, currentList);
+      }
+      renderAll();
+    }
+
+    function resetList() {
+      var len = (currentList === 'morning') ? MORNING_ITEMS.length : EVENING_ITEMS.length;
+      appState[currentKid][currentList] = repeat(false, len);
+      appState[currentKid].notified[currentList] = false;
+      saveState();
+      renderAll();
+    }
+
+    function sendParentNotification(kidIdx, list) {
+      if (!settings.topic) return;
+      if (appState[kidIdx].notified[list]) return;
+      appState[kidIdx].notified[list] = true;
+      saveState();
+
+      var kidName  = (kidIdx === 0) ? settings.kid1 : settings.kid2;
+      var emoji    = (list === 'morning') ? '☀️' : '🌙';
+      var listName = (list === 'morning') ? 'Morning' : 'Evening';
+
+      fetch('https://ntfy.sh/' + settings.topic, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic:    settings.topic,
+          title:    emoji + ' ' + kidName + ' finished their ' + listName + ' Routine!',
+          message:  'All ' + listName.toLowerCase() + ' tasks checked off. Great job, ' + kidName + '! 🎉',
+          priority: 3,
+          tags:     ['tada', 'star']
+        })
+      }).catch(function(e) { console.log('ntfy:', e); });
+    }
+
+    function renderFloaties(isMorning) {
+      var c = document.getElementById('floaties');
+      c.innerHTML = '';
+      if (isMorning) {
+        var ems = ['☀️','🌤️','⭐','🌈','🌻','🌸','🦋','🐝'];
+        ems.forEach(function(em) {
+          var el = document.createElement('div');
+          el.className = 'floaty'; el.textContent = em;
+          el.style.cssText = 'left:' + (Math.random()*100) + 'vw;animation-duration:' + (12+Math.random()*20) + 's;animation-delay:' + (Math.random()*20) + 's;font-size:' + (1.5+Math.random()*2) + 'rem';
+          c.appendChild(el);
+        });
+      } else {
+        for (var i = 0; i < 30; i++) {
+          var s = document.createElement('div'); s.className = 'star';
+          var sz = 2+Math.random()*5;
+          s.style.cssText = 'width:'+sz+'px;height:'+sz+'px;top:'+(Math.random()*100)+'vh;left:'+(Math.random()*100)+'vw;animation-duration:'+(1.5+Math.random()*3)+'s;animation-delay:'+(Math.random()*3)+'s';
+          c.appendChild(s);
+        }
+        ['🌙','⭐','🌟','💫','✨','🦉','🌜'].forEach(function(em) {
+          var el = document.createElement('div'); el.className = 'floaty'; el.textContent = em;
+          el.style.cssText = 'left:'+(Math.random()*100)+'vw;animation-duration:'+(15+Math.random()*20)+'s;animation-delay:'+(Math.random()*20)+'s';
+          c.appendChild(el);
+        });
+      }
+    }
+
+    function triggerConfetti() {
+      var canvas = document.getElementById('confetti-canvas');
+      var ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+      var colors = ['#FFD700','#FF6B6B','#4FC3F7','#A5D6A7','#CE93D8','#FFB74D','#80CBC4'];
+      var pieces = [];
+      for (var i = 0; i < 120; i++) {
+        pieces.push({ x: Math.random()*canvas.width, y: -20, r: 3+Math.random()*6, color: colors[Math.floor(Math.random()*colors.length)], vx: (Math.random()-0.5)*6, vy: 2+Math.random()*4, angle: Math.random()*360, spin: (Math.random()-0.5)*10, opacity: 1 });
+      }
+      var frame = 0;
+      (function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pieces.forEach(function(p) {
+          ctx.save(); ctx.globalAlpha = p.opacity; ctx.translate(p.x,p.y); ctx.rotate(p.angle*Math.PI/180);
+          ctx.fillStyle = p.color; ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r); ctx.restore();
+          p.x+=p.vx; p.y+=p.vy; p.angle+=p.spin; p.vy+=0.1;
+          if (p.y > canvas.height-50) p.opacity-=0.03;
+        });
+        if (++frame < 200) requestAnimationFrame(draw);
+        else ctx.clearRect(0,0,canvas.width,canvas.height);
+      })();
+    }
+
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(function() { t.classList.remove('show'); }, 2800);
+    }
+
+    function updateDate() {
+      document.getElementById('date-display').textContent =
+        new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+    }
+
+    function injectManifest() {
+      var m = { name:'Daily Routine', short_name:'Daily Routine', start_url:'./', display:'standalone', background_color:'#FFF9C4', theme_color:'#FF8F00' };
+      var link = document.createElement('link'); link.rel = 'manifest';
+      link.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type:'application/json' }));
+      document.head.appendChild(link);
+    }
+
+    window.onload = function() {
+      loadSettings();
+      loadState();
+      updateDate();
+      currentList = detectTOD();
+      renderAll();
+      injectManifest();
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(function(){});
+      }
+
+      setInterval(function() {
+        updateDate();
+        if (detectTOD() !== currentList) { currentList = detectTOD(); renderAll(); }
+      }, 60000);
+    };
+  </script>
+</body>
+</html>
